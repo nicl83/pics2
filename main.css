@@ -1,0 +1,128 @@
+body {
+    font-family: sans-serif;
+}
+
+.body-container {
+    display: flex;
+    height:100%
+}
+
+.body-sidebar {
+    padding: 0.5em;
+    width: 7.5em;
+    flex-grow: 0;
+    border-right: 1px solid;
+    border-color: black;
+    word-wrap: break-word;
+}
+
+ul.body-sidebar {
+    list-style: none;
+    padding-left: 0;
+}
+
+.body-main-content {
+    margin-left: 1em;
+    flex-grow: 2;
+}
+
+.img-no-overflow {
+    max-width: 90%;
+}
+
+.photo-container {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.photo {
+    display: flex;
+    flex-direction: column;
+    width: 10em;
+    background-color: lightgray;
+    border: 1px solid;
+    border-color: silver;
+    margin: 0.5em;
+}
+
+.img-photo {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 80%;
+    max-height: 6em;
+    padding: 1em;
+}
+
+.caption-photo {
+    text-align: center;
+    font-size: small;
+    word-wrap: break-word;
+    flex-grow: 1;
+    width: 100%;
+    height: auto;
+    background-color: silver;
+}
+
+a {
+    font-size: medium;
+}
+
+.folder-groups {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.folder-group-container {
+    flex-grow: 1;
+    border: solid #003399 1px;
+    color: white;
+    margin: 0.25em;
+}
+
+.folder-caption {
+    margin: 0;
+    background-color: #003399;
+    padding: 0.25em;
+}
+
+.folder-group {
+    display: block;
+    background-color: white;
+    color: black;
+    padding-top: 0.25em;
+    padding-bottom: 0.25em;
+}
+
+a {
+    text-decoration: none;
+}
+
+.folder-list {
+    margin: 0;
+}
+
+.image-preview {
+    height: auto;
+    max-width: 90%;
+    border: solid 1px;
+    border-color: black;
+}
+
+.exif-table {
+    max-width: 90%;
+    border-color: black;
+    word-wrap: break-word;
+    background-color: lightgray;
+}
+
+.exif-table-header {
+    background-color: gray;
+}
+
+tr, td.exif-table {
+    border-collapse: collapse;
+    max-width: auto;
+    padding-right: 0.25em;
+}
