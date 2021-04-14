@@ -26,9 +26,22 @@ sidebar = """<div class='body-sidebar'>
 
 def is_photo(file_path):
     try:
-        Image.open(file_path)
-        return True
+        with Image.open(file_path) as im_file:
+            return True
     except:
+        return False
+
+def password_file_exists(dir_path):
+    try:
+        if dir_path.endswith('/'):
+            pass
+        else:
+            dir_path = f"{dir_path}/"
+        with open(f"{dir_path}.password", 'r') as pass_file:
+            print("dbg: found pw file")
+            return True
+    except Exception as e:
+        print(f"dbg: couldn't open pw file ({e})")
         return False
 
 def date_name_split(ds_input: str, whitespace_char='_'):
@@ -247,10 +260,21 @@ async def pics_handler(request):
         folder_entries = os.listdir(fs_path)
         files = []
         subfolders = []
+        try:
+            with open(f'{fs_path}/.password', 'r') as pass_file:
+                password_data = pass_file.read()
+        except:
+            password_data = None
         for entry in folder_entries:
-            fullpath = f"{fs_path}/{entry}"
+            if fs_path.endswith('/'):
+                fullpath = f"{fs_path}{entry}"
+            else:
+                fullpath = f"{fs_path}/{entry}"
             if os.path.isfile(fullpath):
-                files.append(entry)
+                if entry.startswith('.'): # respect hidden files
+                    pass
+                else:
+                    files.append(entry)
             elif os.path.isdir(fullpath):
                 subfolders.append(entry)
         if len(files) == 0 and len(subfolders) == 0:
@@ -269,7 +293,8 @@ async def pics_handler(request):
 </html>
             """
         else:
-            response = f"""<!DOCTYPE HTML>
+            if not password_file_exists(fs_path):
+                response = f"""<!DOCTYPE HTML>
 <html>
     <head><link rel='stylesheet' href='/css'></head>
     <body>
@@ -283,7 +308,44 @@ async def pics_handler(request):
         </div>
     </body>
 </html>
-            """
+                """
+            else:
+                if 'pass' in request.rel_url.query and \
+                   request.rel_url.query['pass'] == password_data:
+                    response = f"""<!DOCTYPE HTML>
+<html>
+    <head><link rel='stylesheet' href='/css'></head>
+    <body>
+        <div class='body-container'>
+            {sidebar}
+            <div class='body-main-content'>
+                {generate_clickable_path(f"/pics/{request_path}")}
+                {generate_folder_groups(request_path, subfolders )}
+                {generate_photo_container(request_path, files)}
+            </div>
+        </div>
+    </body>
+</html>
+                    """
+                else:
+                    response = f"""<!DOCTYPE HTML>
+<html>
+    <head><link rel='stylesheet' href='/css'></head>
+    <body>
+        <div class='body-container'>
+            {sidebar}
+            <div class='body-main-content'>
+            {generate_clickable_path(f"/pics/{request_path}")}
+            <p>This album is protected with a password.</p>
+            <form>
+                <input type="text" id="pass" name="pass">
+                <input type="submit" value="Enter">
+            </form>
+            </div>
+        </div>
+    </body>
+</html>
+                    """
         return web.Response(text=response, content_type="text/html")
     else:
         response = f"""<!DOCTYPE HTML>
