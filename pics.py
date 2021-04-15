@@ -24,6 +24,8 @@ sidebar = """<div class='body-sidebar'>
 </div>
 """
 
+lock = """<img src='/lock' class='lock-icon'>"""
+
 def is_photo(file_path):
     try:
         with Image.open(file_path) as im_file:
@@ -136,9 +138,15 @@ def generate_folder_groups(req_path_in: str, folders_in: list):
             response += "<ul class='folder-list'>\n"
             for event in album_groups[year]:
                 if req_path_in == '':
-                    response += f"<li><a href='/pics/{event[2]}'>{event[1]}</a></li>\n"
+                    if password_file_exists(f"./pics/{event[2]}"):
+                        response += f"<li><a href='/pics/{event[2]}'>{event[1]} {lock}</a></li>\n"
+                    else:
+                        response += f"<li><a href='/pics/{event[2]}'>{event[1]}</a></li>\n"
                 else:
-                    response += f"<li><a href='/pics/{req_path_in}/{event[2]}'>{event[1]}</a></li>\n"
+                    if password_file_exists(f"./pics/{req_path_in}/{event[2]}"):
+                        response += f"<li><a href='/pics/{req_path_in}/{event[2]}'>{event[1]} {lock}</a></li>\n"
+                    else:
+                        response += f"<li><a href='/pics/{req_path_in}/{event[2]}'>{event[1]}</a></li>\n"
             response += "</ul>"
             response += "</div>"
         else:
@@ -147,9 +155,15 @@ def generate_folder_groups(req_path_in: str, folders_in: list):
             response += "<ul class='folder-list'>\n"
             for event in album_groups[year]:
                 if req_path_in == '':
-                    response += f"<li><a href='/pics/{event[2]}'>{event[0].strftime('%d %b')}: {event[1]}</a></li>\n"
+                    if password_file_exists(f"./pics/{event[2]}"):
+                        response += f"<li><a href='/pics/{event[2]}'>{event[0].strftime('%d %b')}: {event[1]} {lock}</a></li>\n"
+                    else:
+                        response += f"<li><a href='/pics/{event[2]}'>{event[0].strftime('%d %b')}: {event[1]}</a></li>\n"
                 else:
-                    response += f"<li><a href='/pics/{req_path_in}/{event[2]}'>{event[0].strftime('%d %b')}: {event[1]}</a></li>\n"
+                    if password_file_exists(f"./pics/{event[2]}"):
+                        response += f"<li><a href='/pics/{req_path_in}/{event[2]}'>{event[0].strftime('%d %b')}: {event[1]} {lock}</a></li>\n"
+                    else:
+                        response += f"<li><a href='/pics/{req_path_in}/{event[2]}'>{event[0].strftime('%d %b')}: {event[1]}</a></li>\n"
             response += "</ul>"
             response += "</div>"
         response += "</div>"
@@ -385,6 +399,12 @@ async def logo(request):
     with open('./assets/logo.png', 'rb') as logofile:
         logodata = logofile.read()
     return web.Response(body=logodata, content_type="image/png")
+
+@routes.get(r'/lock')
+async def logo(request):
+    with open('./assets/locked.png', 'rb') as lockfile:
+        lockdata = lockfile.read()
+    return web.Response(body=lockdata, content_type="image/png")
 
 @routes.get(r'/scale/{request_path:.*}')
 async def scale_handler(request):
