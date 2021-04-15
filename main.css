@@ -126,3 +126,7 @@ tr, td.exif-table {
     max-width: auto;
     padding-right: 0.25em;
 }
+
+.lock-icon {
+    height: 0.8em;
+}

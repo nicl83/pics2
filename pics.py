@@ -24,11 +24,24 @@ sidebar = """<div class='body-sidebar'>
 </div>
 """
 
+lock = """<img src='/lock' class='lock-icon'>"""
+
 def is_photo(file_path):
     try:
-        Image.open(file_path)
-        return True
+        with Image.open(file_path) as im_file:
+            return True
     except:
+        return False
+
+def password_file_exists(dir_path):
+    try:
+        if dir_path.endswith('/'):
+            pass
+        else:
+            dir_path = f"{dir_path}/"
+        with open(f"{dir_path}.password", 'r') as pass_file:
+            return True
+    except Exception as e:
         return False
 
 def date_name_split(ds_input: str, whitespace_char='_'):
@@ -125,9 +138,11 @@ def generate_folder_groups(req_path_in: str, folders_in: list):
             response += "<ul class='folder-list'>\n"
             for event in album_groups[year]:
                 if req_path_in == '':
-                    response += f"<li><a href='/pics/{event[2]}'>{event[1]}</a></li>\n"
+                    url_to_folder = f'/pics/{event[2]}'
                 else:
-                    response += f"<li><a href='/pics/{req_path_in}/{event[2]}'>{event[1]}</a></li>\n"
+                    url_to_folder = f'/pics/{req_path_in}/{event[2]}'
+                show_lock_icon = password_file_exists(f"./pics/{event[2]}")
+                response += f"<li><a href='{url_to_folder}'>{event[1]} {lock if show_lock_icon else ''}</a></li>\n"
             response += "</ul>"
             response += "</div>"
         else:
@@ -136,9 +151,11 @@ def generate_folder_groups(req_path_in: str, folders_in: list):
             response += "<ul class='folder-list'>\n"
             for event in album_groups[year]:
                 if req_path_in == '':
-                    response += f"<li><a href='/pics/{event[2]}'>{event[0].strftime('%d %b')}: {event[1]}</a></li>\n"
+                    url_to_folder = f'/pics/{event[2]}'
                 else:
-                    response += f"<li><a href='/pics/{req_path_in}/{event[2]}'>{event[0].strftime('%d %b')}: {event[1]}</a></li>\n"
+                    url_to_folder = f'/pics/{req_path_in}/{event[2]}'
+                show_lock_icon = password_file_exists(f"./pics/{event[2]}")
+                response += f"<li><a href='{url_to_folder}'>{event[0].strftime('%d %b')}: {event[1]} {lock if show_lock_icon else ''}</a></li>\n"
             response += "</ul>"
             response += "</div>"
         response += "</div>"
@@ -239,18 +256,47 @@ async def pics_handler(request):
                 """
                 return web.Response(text=response, content_type="text/html")
         else:
-            with open(fs_path, 'rb') as file_obj:
-                file_data = file_obj.read()
-            return web.Response(body=file_data, content_type="application/octet-stream")
+            _, filename = os.path.split(fs_path)
+            if filename.startswith('.'):
+                        response = f"""<!DOCTYPE HTML>
+<html>
+    <head><link rel='stylesheet' href='/css'></head>
+    <body>
+        <div class='body-container'>
+            {sidebar}
+            <div class='body-main-content'>
+                {generate_clickable_path(f"/pics/{request_path}")}
+                <p>Downloading of this file is prohibited.</p>
+            </div>
+        </div>
+    </body>
+</html>
+                        """
+                        return web.Response(text=response, content_type="text/html")
+            else:
+                with open(fs_path, 'rb') as file_obj:
+                    file_data = file_obj.read()
+                return web.Response(body=file_data, content_type="application/octet-stream")
 
     elif os.path.isdir(fs_path):
         folder_entries = os.listdir(fs_path)
         files = []
         subfolders = []
+        try:
+            with open(f'{fs_path}/.password', 'r') as pass_file:
+                password_data = pass_file.read()
+        except:
+            password_data = None
         for entry in folder_entries:
-            fullpath = f"{fs_path}/{entry}"
+            if fs_path.endswith('/'):
+                fullpath = f"{fs_path}{entry}"
+            else:
+                fullpath = f"{fs_path}/{entry}"
             if os.path.isfile(fullpath):
-                files.append(entry)
+                if entry.startswith('.'): # respect hidden files
+                    pass
+                else:
+                    files.append(entry)
             elif os.path.isdir(fullpath):
                 subfolders.append(entry)
         if len(files) == 0 and len(subfolders) == 0:
@@ -269,7 +315,8 @@ async def pics_handler(request):
 </html>
             """
         else:
-            response = f"""<!DOCTYPE HTML>
+            if not password_file_exists(fs_path):
+                response = f"""<!DOCTYPE HTML>
 <html>
     <head><link rel='stylesheet' href='/css'></head>
     <body>
@@ -283,7 +330,44 @@ async def pics_handler(request):
         </div>
     </body>
 </html>
-            """
+                """
+            else:
+                if 'pass' in request.rel_url.query and \
+                   request.rel_url.query['pass'] == password_data:
+                    response = f"""<!DOCTYPE HTML>
+<html>
+    <head><link rel='stylesheet' href='/css'></head>
+    <body>
+        <div class='body-container'>
+            {sidebar}
+            <div class='body-main-content'>
+                {generate_clickable_path(f"/pics/{request_path}")}
+                {generate_folder_groups(request_path, subfolders )}
+                {generate_photo_container(request_path, files)}
+            </div>
+        </div>
+    </body>
+</html>
+                    """
+                else:
+                    response = f"""<!DOCTYPE HTML>
+<html>
+    <head><link rel='stylesheet' href='/css'></head>
+    <body>
+        <div class='body-container'>
+            {sidebar}
+            <div class='body-main-content'>
+            {generate_clickable_path(f"/pics/{request_path}")}
+            <p>This album is protected with a password.</p>
+            <form>
+                <input type="password" id="pass" name="pass">
+                <input type="submit" value="Enter">
+            </form>
+            </div>
+        </div>
+    </body>
+</html>
+                    """
         return web.Response(text=response, content_type="text/html")
     else:
         response = f"""<!DOCTYPE HTML>
@@ -307,6 +391,12 @@ async def logo(request):
     with open('./assets/logo.png', 'rb') as logofile:
         logodata = logofile.read()
     return web.Response(body=logodata, content_type="image/png")
+
+@routes.get(r'/lock')
+async def logo(request):
+    with open('./assets/locked.png', 'rb') as lockfile:
+        lockdata = lockfile.read()
+    return web.Response(body=lockdata, content_type="image/png")
 
 @routes.get(r'/scale/{request_path:.*}')
 async def scale_handler(request):
