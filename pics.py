@@ -138,15 +138,11 @@ def generate_folder_groups(req_path_in: str, folders_in: list):
             response += "<ul class='folder-list'>\n"
             for event in album_groups[year]:
                 if req_path_in == '':
-                    if password_file_exists(f"./pics/{event[2]}"):
-                        response += f"<li><a href='/pics/{event[2]}'>{event[1]} {lock}</a></li>\n"
-                    else:
-                        response += f"<li><a href='/pics/{event[2]}'>{event[1]}</a></li>\n"
+                    url_to_folder = f'/pics/{event[2]}'
                 else:
-                    if password_file_exists(f"./pics/{req_path_in}/{event[2]}"):
-                        response += f"<li><a href='/pics/{req_path_in}/{event[2]}'>{event[1]} {lock}</a></li>\n"
-                    else:
-                        response += f"<li><a href='/pics/{req_path_in}/{event[2]}'>{event[1]}</a></li>\n"
+                    url_to_folder = f'/pics/{req_path_in}/{event[2]}'
+                show_lock_icon = password_file_exists(f"./pics/{event[2]}")
+                response += f"<li><a href='{url_to_folder}'>{event[1]} {lock}</a></li>\n"
             response += "</ul>"
             response += "</div>"
         else:
@@ -155,15 +151,11 @@ def generate_folder_groups(req_path_in: str, folders_in: list):
             response += "<ul class='folder-list'>\n"
             for event in album_groups[year]:
                 if req_path_in == '':
-                    if password_file_exists(f"./pics/{event[2]}"):
-                        response += f"<li><a href='/pics/{event[2]}'>{event[0].strftime('%d %b')}: {event[1]} {lock}</a></li>\n"
-                    else:
-                        response += f"<li><a href='/pics/{event[2]}'>{event[0].strftime('%d %b')}: {event[1]}</a></li>\n"
+                    url_to_folder = f'/pics/{event[2]}'
                 else:
-                    if password_file_exists(f"./pics/{event[2]}"):
-                        response += f"<li><a href='/pics/{req_path_in}/{event[2]}'>{event[0].strftime('%d %b')}: {event[1]} {lock}</a></li>\n"
-                    else:
-                        response += f"<li><a href='/pics/{req_path_in}/{event[2]}'>{event[0].strftime('%d %b')}: {event[1]}</a></li>\n"
+                    url_to_folder = f'/pics/{req_path_in}/{event[2]}'
+                show_lock_icon = password_file_exists(f"./pics/{event[2]}")
+                response += f"<li><a href='{url_to_folder}'>{event[0].strftime('%d %b')}: {event[1]} {lock if show_lock_icon else ''}</a></li>\n"
             response += "</ul>"
             response += "</div>"
         response += "</div>"
