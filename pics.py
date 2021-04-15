@@ -38,10 +38,8 @@ def password_file_exists(dir_path):
         else:
             dir_path = f"{dir_path}/"
         with open(f"{dir_path}.password", 'r') as pass_file:
-            print("dbg: found pw file")
             return True
     except Exception as e:
-        print(f"dbg: couldn't open pw file ({e})")
         return False
 
 def date_name_split(ds_input: str, whitespace_char='_'):
@@ -252,9 +250,27 @@ async def pics_handler(request):
                 """
                 return web.Response(text=response, content_type="text/html")
         else:
-            with open(fs_path, 'rb') as file_obj:
-                file_data = file_obj.read()
-            return web.Response(body=file_data, content_type="application/octet-stream")
+            _, filename = os.path.split(fs_path)
+            if filename.startswith('.'):
+                        response = f"""<!DOCTYPE HTML>
+<html>
+    <head><link rel='stylesheet' href='/css'></head>
+    <body>
+        <div class='body-container'>
+            {sidebar}
+            <div class='body-main-content'>
+                {generate_clickable_path(f"/pics/{request_path}")}
+                <p>Downloading of this file is prohibited.</p>
+            </div>
+        </div>
+    </body>
+</html>
+                        """
+                        return web.Response(text=response, content_type="text/html")
+            else:
+                with open(fs_path, 'rb') as file_obj:
+                    file_data = file_obj.read()
+                return web.Response(body=file_data, content_type="application/octet-stream")
 
     elif os.path.isdir(fs_path):
         folder_entries = os.listdir(fs_path)
@@ -338,7 +354,7 @@ async def pics_handler(request):
             {generate_clickable_path(f"/pics/{request_path}")}
             <p>This album is protected with a password.</p>
             <form>
-                <input type="text" id="pass" name="pass">
+                <input type="password" id="pass" name="pass">
                 <input type="submit" value="Enter">
             </form>
             </div>
