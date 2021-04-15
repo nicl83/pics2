@@ -142,7 +142,7 @@ def generate_folder_groups(req_path_in: str, folders_in: list):
                 else:
                     url_to_folder = f'/pics/{req_path_in}/{event[2]}'
                 show_lock_icon = password_file_exists(f"./pics/{event[2]}")
-                response += f"<li><a href='{url_to_folder}'>{event[1]} {lock}</a></li>\n"
+                response += f"<li><a href='{url_to_folder}'>{event[1]} {lock if show_lock_icon else ''}</a></li>\n"
             response += "</ul>"
             response += "</div>"
         else:
